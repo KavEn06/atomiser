@@ -1,0 +1,9 @@
+{
+  "pid": 105,
+  "port": 58649,
+  "token": "ab20ac78-fc6e-45e8-88a9-8f76c9b683ec",
+  "startedAt": "2026-07-08T05:15:52.448Z",
+  "serverPath": "/Users/kavinnimalarajan/.claude/skills/gstack/browse/src/server.ts",
+  "mode": "launched",
+  "configHash": "303a7eeccc03078b"
+}
