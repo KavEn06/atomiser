@@ -208,14 +208,14 @@ export type FlowEdgeData = { edge: GraphEdge };
 export type RFNode = RFNodeBase<FlowNodeData, 'flow'>;
 export type RFEdge = RFEdgeBase<FlowEdgeData>;
 
-export function selectFlowNodes(state: GraphState): RFNode[] {
+export function selectFlowNodes(state: Pick<GraphState, 'nodes' | 'layouts'>): RFNode[] {
   return Object.values(state.nodes).map((node) => {
     const l = state.layouts[node.id];
     return { id: node.id, type: 'flow', position: { x: l?.x ?? 0, y: l?.y ?? 0 }, data: { node } };
   });
 }
 
-export function selectFlowEdges(state: GraphState, _connector: string): RFEdge[] {
+export function selectFlowEdges(state: Pick<GraphState, 'edges'>, _connector: string): RFEdge[] {
   return Object.values(state.edges).map((edge) => ({
     id: edge.id,
     source: edge.source,

@@ -28,7 +28,6 @@ class ResizeObserverMock {
   unobserve() {}
   disconnect() {}
 }
-// @ts-expect-error jsdom stub
 globalThis.ResizeObserver = ResizeObserverMock;
 
 class DOMMatrixReadOnlyMock {
