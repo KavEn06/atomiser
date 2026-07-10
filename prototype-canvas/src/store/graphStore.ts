@@ -1,8 +1,12 @@
 import { create } from 'zustand';
 import {
+  newChartBlock,
   newEdge,
   newGraph,
+  newImageBlock,
   newNode,
+  newTextBlock,
+  type Block,
   type Graph,
   type GraphEdge,
   type GraphNode,
@@ -34,6 +38,11 @@ export interface GraphState {
   connect: (source: string, target: string) => string | null;
   deleteEdge: (id: string) => void;
   setEdgeLabel: (id: string, label: string) => void;
+
+  addBlock: (nodeId: string, kind: Block['type']) => string;
+  updateBlock: (nodeId: string, blockId: string, patch: Partial<Block>) => void;
+  deleteBlock: (nodeId: string, blockId: string) => void;
+  moveBlock: (nodeId: string, blockId: string, dir: -1 | 1) => void;
 }
 
 export function createInitialState() {
@@ -119,6 +128,49 @@ export const graphActions = (
       const e = s.edges[id];
       if (!e) return {};
       return { edges: { ...s.edges, [id]: { ...e, label } } };
+    }),
+
+  addBlock: (nodeId, kind) => {
+    const block =
+      kind === 'text' ? newTextBlock() : kind === 'image' ? newImageBlock() : newChartBlock();
+    set((s) => {
+      const n = s.nodes[nodeId];
+      if (!n) return {};
+      return { nodes: { ...s.nodes, [nodeId]: { ...n, body: [...n.body, block], updatedAt: now() } } };
+    });
+    return block.id;
+  },
+
+  updateBlock: (nodeId, blockId, patch) =>
+    set((s) => {
+      const n = s.nodes[nodeId];
+      if (!n) return {};
+      const body = n.body.map((b) => (b.id === blockId ? ({ ...b, ...patch } as Block) : b));
+      return { nodes: { ...s.nodes, [nodeId]: { ...n, body, updatedAt: now() } } };
+    }),
+
+  deleteBlock: (nodeId, blockId) =>
+    set((s) => {
+      const n = s.nodes[nodeId];
+      if (!n) return {};
+      return {
+        nodes: {
+          ...s.nodes,
+          [nodeId]: { ...n, body: n.body.filter((b) => b.id !== blockId), updatedAt: now() },
+        },
+      };
+    }),
+
+  moveBlock: (nodeId, blockId, dir) =>
+    set((s) => {
+      const n = s.nodes[nodeId];
+      if (!n) return {};
+      const i = n.body.findIndex((b) => b.id === blockId);
+      const j = i + dir;
+      if (i < 0 || j < 0 || j >= n.body.length) return {};
+      const body = [...n.body];
+      [body[i], body[j]] = [body[j], body[i]];
+      return { nodes: { ...s.nodes, [nodeId]: { ...n, body, updatedAt: now() } } };
     }),
 });
 
