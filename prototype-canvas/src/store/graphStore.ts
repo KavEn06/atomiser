@@ -1,4 +1,7 @@
 import { create } from 'zustand';
+import { persist } from 'zustand/middleware';
+import type { Edge as RFEdgeBase, Node as RFNodeBase } from '@xyflow/react';
+import { seedGraph } from '../seed';
 import {
   newChartBlock,
   newEdge,
@@ -43,6 +46,9 @@ export interface GraphState {
   updateBlock: (nodeId: string, blockId: string, patch: Partial<Block>) => void;
   deleteBlock: (nodeId: string, blockId: string) => void;
   moveBlock: (nodeId: string, blockId: string, dir: -1 | 1) => void;
+
+  clearGraph: () => void;
+  loadSeed: () => void;
 }
 
 export function createInitialState() {
@@ -172,9 +178,50 @@ export const graphActions = (
       [body[i], body[j]] = [body[j], body[i]];
       return { nodes: { ...s.nodes, [nodeId]: { ...n, body, updatedAt: now() } } };
     }),
+
+  clearGraph: () => set(() => ({ nodes: {}, edges: {}, layouts: {} })),
+
+  loadSeed: () => {
+    const { nodes, edges, layouts } = seedGraph();
+    set(() => ({
+      nodes: Object.fromEntries(nodes.map((n) => [n.id, n])),
+      edges: Object.fromEntries(edges.map((e) => [e.id, e])),
+      layouts: Object.fromEntries(layouts.map((l) => [l.nodeId, l])),
+    }));
+  },
 });
 
-export const useGraphStore = create<GraphState>((set, get) => ({
-  ...createInitialState(),
-  ...graphActions(set, get),
-}));
+export const useGraphStore = create<GraphState>()(
+  persist(
+    (set, get) => ({ ...createInitialState(), ...graphActions(set, get) }),
+    {
+      name: 'atomiser:graph:v1',
+      partialize: (s) => ({ graph: s.graph, nodes: s.nodes, edges: s.edges, layouts: s.layouts }),
+    },
+  ),
+);
+
+// --- Pure selectors: store shape → React Flow arrays ---
+
+export type FlowNodeData = { node: GraphNode };
+export type FlowEdgeData = { edge: GraphEdge };
+export type RFNode = RFNodeBase<FlowNodeData, 'flow'>;
+export type RFEdge = RFEdgeBase<FlowEdgeData>;
+
+export function selectFlowNodes(state: GraphState): RFNode[] {
+  return Object.values(state.nodes).map((node) => {
+    const l = state.layouts[node.id];
+    return { id: node.id, type: 'flow', position: { x: l?.x ?? 0, y: l?.y ?? 0 }, data: { node } };
+  });
+}
+
+export function selectFlowEdges(state: GraphState, _connector: string): RFEdge[] {
+  return Object.values(state.edges).map((edge) => ({
+    id: edge.id,
+    source: edge.source,
+    target: edge.target,
+    type: 'labelled',
+    label: edge.label,
+    data: { edge },
+  }));
+}
