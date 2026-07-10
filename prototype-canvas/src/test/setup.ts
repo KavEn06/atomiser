@@ -62,4 +62,6 @@ try {
 if (globalThis.SVGElement) {
   // @ts-expect-error jsdom stub
   globalThis.SVGElement.prototype.getBBox = () => ({ x: 0, y: 0, width: 0, height: 0 });
+  // @ts-expect-error jsdom stub — Recharts measures text
+  globalThis.SVGElement.prototype.getComputedTextLength = () => 0;
 }
