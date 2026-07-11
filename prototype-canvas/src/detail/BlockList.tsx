@@ -35,15 +35,28 @@ export function BlockList({ nodeId }: { nodeId: string }) {
           <BlockView nodeId={nodeId} block={block} />
         </div>
       ))}
-      <div className="flex gap-2">
-        <button onClick={() => addBlock(nodeId, 'text')} className="rounded border border-stone-300 px-2 py-1 text-[12px]">
-          Add text
+      <div className="flex items-center gap-2 border-t border-stone-200 pt-2 text-[12px]">
+        <span className="text-[10px] tracking-wider text-stone-400 uppercase">Insert</span>
+        <button
+          aria-label="Add text"
+          onClick={() => addBlock(nodeId, 'text')}
+          className="rounded border border-stone-300 px-2 py-1"
+        >
+          ¶ Text
         </button>
-        <button onClick={() => addBlock(nodeId, 'image')} className="rounded border border-stone-300 px-2 py-1 text-[12px]">
-          Add image
+        <button
+          aria-label="Add image"
+          onClick={() => addBlock(nodeId, 'image')}
+          className="rounded border border-stone-300 px-2 py-1"
+        >
+          ⧉ Image
         </button>
-        <button onClick={() => addBlock(nodeId, 'chart')} className="rounded border border-stone-300 px-2 py-1 text-[12px]">
-          Add chart
+        <button
+          aria-label="Add chart"
+          onClick={() => addBlock(nodeId, 'chart')}
+          className="rounded border border-stone-300 px-2 py-1"
+        >
+          ▦ Chart
         </button>
       </div>
     </div>
