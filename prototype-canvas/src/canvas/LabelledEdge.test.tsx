@@ -48,4 +48,32 @@ describe('LabelledEdge', () => {
     fireEvent.blur(input);
     expect(useGraphStore.getState().edges[e].label).toBe('gates');
   });
+
+  it('shows a weight control when the edge is selected and sets the weight', () => {
+    const g = useGraphStore.getState();
+    const a = g.addNode({ x: 0, y: 0 });
+    const b = g.addNode({ x: 300, y: 0 });
+    const e = g.connect(a, b)!;
+
+    const nodes = selectFlowNodes(useGraphStore.getState()).map((n) => ({
+      ...n,
+      width: 210,
+      height: 80,
+      measured: { width: 210, height: 80 },
+    }));
+    const edges = selectFlowEdges(useGraphStore.getState(), 'curved').map((ed) => ({
+      ...ed,
+      selected: true,
+    }));
+
+    render(
+      <ReactFlowProvider>
+        <div style={{ width: 600, height: 300 }}>
+          <ReactFlow nodes={nodes} edges={edges} nodeTypes={nodeTypes} edgeTypes={edgeTypes} />
+        </div>
+      </ReactFlowProvider>,
+    );
+    fireEvent.click(screen.getByRole('button', { name: 'heavy' }));
+    expect(useGraphStore.getState().edges[e].weight).toBe('heavy');
+  });
 });
