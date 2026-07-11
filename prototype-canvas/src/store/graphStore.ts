@@ -41,6 +41,7 @@ export interface GraphState {
   setStatus: (id: string, status: Status) => void;
   cycleStatus: (id: string) => void;
   moveNode: (id: string, x: number, y: number) => void;
+  setLayouts: (positions: Record<string, { x: number; y: number }>) => void;
 
   connect: (source: string, target: string) => string | null;
   deleteEdge: (id: string) => void;
@@ -116,6 +117,16 @@ export const graphActions = (
       const l = s.layouts[id];
       if (!l) return {};
       return { layouts: { ...s.layouts, [id]: { ...l, x, y } } };
+    }),
+
+  setLayouts: (positions) =>
+    set((s) => {
+      const layouts = { ...s.layouts };
+      for (const [id, pos] of Object.entries(positions)) {
+        const l = layouts[id];
+        if (l) layouts[id] = { ...l, x: pos.x, y: pos.y };
+      }
+      return { layouts };
     }),
 
   connect: (source, target) => {

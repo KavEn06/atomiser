@@ -82,4 +82,13 @@ describe('graphStore nodes & edges', () => {
     s().setEdgeWeight(e, 'heavy');
     expect(s().edges[e].weight).toBe('heavy');
   });
+
+  it('setLayouts moves multiple nodes in one operation', () => {
+    const a = s().addNode({ x: 0, y: 0 });
+    const b = s().addNode({ x: 0, y: 0 });
+    s().setLayouts({ [a]: { x: 100, y: 200 }, [b]: { x: 300, y: 400 }, ghost: { x: 9, y: 9 } });
+    expect(s().layouts[a]).toMatchObject({ x: 100, y: 200 });
+    expect(s().layouts[b]).toMatchObject({ x: 300, y: 400 });
+    expect(s().layouts.ghost).toBeUndefined();
+  });
 });
