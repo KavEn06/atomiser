@@ -12,6 +12,7 @@
     "test:watch": "vitest"
   },
   "dependencies": {
+    "@dagrejs/dagre": "^3.0.0",
     "@tiptap/extension-font-family": "^3.27.3",
     "@tiptap/extension-text-style": "^3.27.3",
     "@tiptap/extension-underline": "^3.27.3",
