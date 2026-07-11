@@ -55,6 +55,19 @@ The **bidirectional sync loop** — a graph the agent genuinely understands and 
 4. **Proposal diffs.** All agent-generated structure arrives as a reviewable diff — highlighted nodes/edges, accepted or rejected individually, like a PR. The agent never silently rearranges the user's work.
 5. **Living status.** Nodes carry todo / in-progress / done / blocked. The graph doubles as an honest tracker and can answer "what should I work on next?" from the real dependency structure.
 
+### Interaction modes (IDE vs Agent)
+
+Two modes, mirroring Cursor's editor/agent split:
+
+- **IDE mode** — the user edits the graph directly: add nodes, connect them, label edges,
+  expand a node to edit its content (text / chart / image blocks). Edits apply immediately.
+  This is what the v0 editor ships first.
+- **Agent mode** — the AI proposes graph changes as accept/reject proposal diffs (§9). User
+  edits still apply directly; only agent-authored changes pass through the review gate.
+
+Every node and edge carries an `origin` (`user | agent`) so the two are always distinguishable,
+and node content is an ordered list of typed blocks so new content kinds are additive.
+
 ### Supporting features
 
 - **No-idea mode.** Users without a concrete idea chat with the agent — or tell it what they have (parts, skills, interests, an ESP32 and a free weekend) — and co-develop a project idea and flow from scratch.
@@ -146,8 +159,9 @@ Design rules that must hold from day one:
 graphs      id · owner_id · title · created_at · updated_at
 nodes       id (nanoid, stable) · graph_id · parent_id (nullable — REQUIRED in schema even though decomposition is deferred)
             · title · description · node_type (task | decision | milestone | constraint — taxonomy open, §14)
-            · status (todo | in_progress | done | blocked) · meta (jsonb) · timestamps
-edges       id · graph_id · source_id · target_id · edge_type (dependency default) · label (nullable)
+            · status (todo | in_progress | done | blocked) · meta (jsonb)
+            · body (jsonb — ordered content blocks: text | image | chart) · origin (user | agent) · timestamps
+edges       id · graph_id · source_id · target_id · edge_type (dependency default) · label (nullable) · origin (user | agent)
 layouts     node_id · x · y · collapsed (bool)        ← separate from semantics on purpose
 snapshots   id · graph_id · name (nullable) · payload (jsonb) · created_at
 proposals   id · graph_id · source (user_request | agent_review) · ops (jsonb)
