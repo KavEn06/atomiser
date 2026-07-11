@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
+import { temporal } from 'zundo';
 import { MarkerType } from '@xyflow/react';
 import type { Edge as RFEdgeBase, Node as RFNodeBase } from '@xyflow/react';
 import { seedGraph } from '../seed';
@@ -203,11 +204,20 @@ export const graphActions = (
 });
 
 export const useGraphStore = create<GraphState>()(
-  persist(
-    (set, get) => ({ ...createInitialState(), ...graphActions(set, get) }),
+  temporal(
+    persist(
+      (set, get) => ({ ...createInitialState(), ...graphActions(set, get) }),
+      {
+        name: 'atomiser:graph:v1',
+        partialize: (s) => ({ graph: s.graph, nodes: s.nodes, edges: s.edges, layouts: s.layouts }),
+      },
+    ),
     {
-      name: 'atomiser:graph:v1',
+      // Track only the semantic + layout slices; actions/derived are excluded.
+      // No debounce — the canvas pauses history during drags, so each discrete
+      // edit is exactly one entry.
       partialize: (s) => ({ graph: s.graph, nodes: s.nodes, edges: s.edges, layouts: s.layouts }),
+      limit: 100,
     },
   ),
 );
