@@ -13,7 +13,7 @@ export const WEIGHT_STROKE: Record<EdgeWeight, number> = {
   heavy: 4,
 };
 
-export type TextBlock = { id: string; type: 'text'; markdown: string };
+export type TextBlock = { id: string; type: 'text'; html: string; markdown?: string };
 export type ImageBlock = { id: string; type: 'image'; blobId?: string; src?: string; caption?: string };
 export type ChartPoint = { label: string; value: number };
 export type ChartBlock = {
@@ -129,8 +129,8 @@ export function newEdge(
   };
 }
 
-export function newTextBlock(markdown = ''): TextBlock {
-  return { id: `b_${nanoid(6)}`, type: 'text', markdown };
+export function newTextBlock(html = ''): TextBlock {
+  return { id: `b_${nanoid(6)}`, type: 'text', html };
 }
 
 export function newImageBlock(p: Partial<Omit<ImageBlock, 'id' | 'type'>> = {}): ImageBlock {

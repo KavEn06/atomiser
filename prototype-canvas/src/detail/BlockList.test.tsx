@@ -15,7 +15,7 @@ describe('BlockList', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Add text' }));
     const area = screen.getByPlaceholderText('Write text…') as HTMLTextAreaElement;
     fireEvent.change(area, { target: { value: 'hello' } });
-    expect(useGraphStore.getState().nodes[id].body[0]).toMatchObject({ type: 'text', markdown: 'hello' });
+    expect(useGraphStore.getState().nodes[id].body[0]).toMatchObject({ type: 'text', html: 'hello' });
   });
 
   it('adds and removes a chart block', () => {

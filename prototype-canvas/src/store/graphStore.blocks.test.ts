@@ -21,8 +21,8 @@ describe('graphStore blocks', () => {
   it('updateBlock merges a patch while preserving the discriminant', () => {
     const n = s().addNode();
     const b = s().addBlock(n, 'text');
-    s().updateBlock(n, b, { markdown: '# Notes' } as Partial<TextBlock>);
-    expect((s().nodes[n].body[0] as TextBlock).markdown).toBe('# Notes');
+    s().updateBlock(n, b, { html: '<p>Notes</p>' } as Partial<TextBlock>);
+    expect((s().nodes[n].body[0] as TextBlock).html).toBe('<p>Notes</p>');
   });
 
   it('updateBlock can change a chart kind and series', () => {
