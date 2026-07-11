@@ -10,6 +10,7 @@ import {
 } from '@xyflow/react';
 import { FlowNode } from '../nodes/FlowNode';
 import { LabelledEdge } from './LabelledEdge';
+import { Toolbar } from './Toolbar';
 import { selectFlowEdges, selectFlowNodes, useGraphStore, type RFNode } from '../store/graphStore';
 import { useSettings } from '../store/settingsStore';
 import { THEMES } from '../theme';
@@ -31,7 +32,10 @@ function Canvas() {
   const rf = useReactFlow();
 
   const nodes = useMemo(() => selectFlowNodes({ nodes: nodesRec, layouts }), [nodesRec, layouts]);
-  const edges = useMemo(() => selectFlowEdges({ edges: edgesRec }, connector), [edgesRec, connector]);
+  const edges = useMemo(
+    () => selectFlowEdges({ edges: edgesRec }, connector, th.edge),
+    [edgesRec, connector, th.edge],
+  );
 
   const onNodesChange = useCallback(
     (changes: NodeChange<RFNode>[]) => {
@@ -51,15 +55,21 @@ function Canvas() {
 
   const onDoubleClick = useCallback(
     (e: React.MouseEvent) => {
-      if ((e.target as HTMLElement).closest('.react-flow__node, .react-flow__controls')) return;
+      if ((e.target as HTMLElement).closest('.react-flow__node, .react-flow__controls, .react-flow__panel')) return;
       const pos = rf.screenToFlowPosition({ x: e.clientX, y: e.clientY });
       addNode({ x: pos.x, y: pos.y });
     },
     [rf, addNode],
   );
 
+  // Pause history while dragging so a drag doesn't spam entries; node position
+  // is intentionally not undoable in v1.
+  const onNodeDragStart = useCallback(() => useGraphStore.temporal.getState().pause(), []);
+  const onNodeDragStop = useCallback(() => useGraphStore.temporal.getState().resume(), []);
+
   return (
     <div className="h-full w-full" style={{ background: th.canvas }} onDoubleClick={onDoubleClick}>
+      <Toolbar />
       <ReactFlow
         nodes={nodes}
         edges={edges}
@@ -67,6 +77,8 @@ function Canvas() {
         edgeTypes={edgeTypes}
         onNodesChange={onNodesChange}
         onConnect={onConnect}
+        onNodeDragStart={onNodeDragStart}
+        onNodeDragStop={onNodeDragStop}
         fitView
         fitViewOptions={{ padding: 0.2 }}
         minZoom={0.25}

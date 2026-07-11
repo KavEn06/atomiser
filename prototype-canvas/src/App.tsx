@@ -6,25 +6,30 @@ import { NodeDrawer } from './detail/NodeDrawer';
 import { SettingsPanel } from './ui/SettingsPanel';
 import { useGraphStore } from './store/graphStore';
 import { useSettings } from './store/settingsStore';
+import { useHistoryShortcuts } from './canvas/useHistoryShortcuts';
 import { FONTS, THEMES } from './theme';
 
 export default function App() {
   const title = useGraphStore((s) => s.graph.title);
-  const nodeCount = useGraphStore((s) => Object.keys(s.nodes).length);
-  const addNode = useGraphStore((s) => s.addNode);
   const clearGraph = useGraphStore((s) => s.clearGraph);
   const loadSeed = useGraphStore((s) => s.loadSeed);
   const th = THEMES[useSettings((s) => s.theme)];
   const font = FONTS[useSettings((s) => s.font)];
   const [settingsOpen, setSettingsOpen] = useState(false);
 
-  // Seed the sample graph on a truly empty first load.
+  useHistoryShortcuts();
+
+  // Seed the sample graph on a truly empty first load, then start with a clean
+  // history so the seed / rehydrate isn't an undoable step.
   useEffect(() => {
-    if (nodeCount === 0 && !localStorage.getItem('atomiser:seeded:v1')) {
+    const empty = Object.keys(useGraphStore.getState().nodes).length === 0;
+    if (empty && !localStorage.getItem('atomiser:seeded:v1')) {
       loadSeed();
       localStorage.setItem('atomiser:seeded:v1', '1');
     }
-  }, [nodeCount, loadSeed]);
+    useGraphStore.temporal.getState().clear();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   return (
     <div className={`flex h-full w-full flex-col ${font.body}`} style={{ background: th.app, color: th.text }}>
@@ -47,13 +52,6 @@ export default function App() {
         </span>
 
         <div className="ml-auto flex items-center gap-2 text-[12px]">
-          <button
-            onClick={() => addNode({ x: 40, y: 40 })}
-            className="rounded px-2 py-1"
-            style={{ background: th.accent, color: th.onAccent }}
-          >
-            ＋ Add node
-          </button>
           <button
             onClick={() => {
               if (confirm('Clear the whole graph?')) clearGraph();
