@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
+import { MarkerType } from '@xyflow/react';
 import type { Edge as RFEdgeBase, Node as RFNodeBase } from '@xyflow/react';
 import { seedGraph } from '../seed';
 import {
@@ -9,7 +10,9 @@ import {
   newImageBlock,
   newNode,
   newTextBlock,
+  WEIGHT_STROKE,
   type Block,
+  type EdgeWeight,
   type Graph,
   type GraphEdge,
   type GraphNode,
@@ -41,6 +44,7 @@ export interface GraphState {
   connect: (source: string, target: string) => string | null;
   deleteEdge: (id: string) => void;
   setEdgeLabel: (id: string, label: string) => void;
+  setEdgeWeight: (id: string, weight: EdgeWeight) => void;
 
   addBlock: (nodeId: string, kind: Block['type']) => string;
   updateBlock: (nodeId: string, blockId: string, patch: Partial<Block>) => void;
@@ -136,6 +140,13 @@ export const graphActions = (
       return { edges: { ...s.edges, [id]: { ...e, label } } };
     }),
 
+  setEdgeWeight: (id, weight) =>
+    set((s) => {
+      const e = s.edges[id];
+      if (!e) return {};
+      return { edges: { ...s.edges, [id]: { ...e, weight } } };
+    }),
+
   addBlock: (nodeId, kind) => {
     const block =
       kind === 'text' ? newTextBlock() : kind === 'image' ? newImageBlock() : newChartBlock();
@@ -215,7 +226,11 @@ export function selectFlowNodes(state: Pick<GraphState, 'nodes' | 'layouts'>): R
   });
 }
 
-export function selectFlowEdges(state: Pick<GraphState, 'edges'>, _connector: string): RFEdge[] {
+export function selectFlowEdges(
+  state: Pick<GraphState, 'edges'>,
+  _connector: string,
+  edgeColor = '#94a3b8',
+): RFEdge[] {
   return Object.values(state.edges).map((edge) => ({
     id: edge.id,
     source: edge.source,
@@ -223,5 +238,7 @@ export function selectFlowEdges(state: Pick<GraphState, 'edges'>, _connector: st
     type: 'labelled',
     label: edge.label,
     data: { edge },
+    style: { stroke: edgeColor, strokeWidth: WEIGHT_STROKE[edge.weight ?? 'normal'] },
+    markerEnd: { type: MarkerType.ArrowClosed, color: edgeColor, width: 16, height: 16 },
   }));
 }

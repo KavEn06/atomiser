@@ -4,6 +4,15 @@ export type NodeType = 'task' | 'decision' | 'milestone' | 'constraint';
 export type Status = 'todo' | 'in_progress' | 'done' | 'blocked';
 export type Origin = 'user' | 'agent';
 
+export type EdgeWeight = 'thin' | 'normal' | 'bold' | 'heavy';
+
+export const WEIGHT_STROKE: Record<EdgeWeight, number> = {
+  thin: 1,
+  normal: 1.6,
+  bold: 2.6,
+  heavy: 4,
+};
+
 export type TextBlock = { id: string; type: 'text'; markdown: string };
 export type ImageBlock = { id: string; type: 'image'; blobId?: string; src?: string; caption?: string };
 export type ChartPoint = { label: string; value: number };
@@ -36,6 +45,7 @@ export interface GraphEdge {
   source: string;
   target: string;
   edgeType: 'dependency' | 'constrains';
+  weight: EdgeWeight;
   label?: string;
   origin: Origin;
   createdAt: string;
@@ -112,6 +122,7 @@ export function newEdge(
     source,
     target,
     edgeType: 'dependency',
+    weight: 'normal',
     origin: 'user',
     ...p,
     createdAt: now(),

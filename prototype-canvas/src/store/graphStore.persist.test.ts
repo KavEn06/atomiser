@@ -40,4 +40,14 @@ describe('persistence + seed + selectors', () => {
     const rf = selectFlowEdges(s(), 'angular');
     expect(rf[0]).toMatchObject({ id: e, source: a, target: b, type: 'labelled' });
   });
+
+  it('selectFlowEdges emits an arrowhead and a weight-based stroke width', () => {
+    const a = s().addNode();
+    const b = s().addNode();
+    const e = s().connect(a, b)!;
+    s().setEdgeWeight(e, 'bold');
+    const rf = selectFlowEdges(s(), 'curved', '#123456');
+    expect(rf[0].markerEnd).toMatchObject({ type: 'arrowclosed', color: '#123456' });
+    expect(rf[0].style).toMatchObject({ stroke: '#123456', strokeWidth: 2.6 });
+  });
 });
