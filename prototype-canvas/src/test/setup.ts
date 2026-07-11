@@ -65,3 +65,32 @@ if (globalThis.SVGElement) {
   // @ts-expect-error jsdom stub — Recharts measures text
   globalThis.SVGElement.prototype.getComputedTextLength = () => 0;
 }
+
+// --- Tiptap / ProseMirror measurement in jsdom ---
+if (!globalThis.matchMedia) {
+  globalThis.matchMedia = () => ({
+    matches: false,
+    media: '',
+    onchange: null,
+    addEventListener() {},
+    removeEventListener() {},
+    addListener() {},
+    removeListener() {},
+    dispatchEvent() {
+      return false;
+    },
+  });
+}
+if (globalThis.Range) {
+  if (!Range.prototype.getClientRects) {
+    // @ts-expect-error jsdom stub
+    Range.prototype.getClientRects = () => ({ length: 0, item: () => null, [Symbol.iterator]: function* () {} });
+  }
+  if (!Range.prototype.getBoundingClientRect) {
+    // @ts-expect-error jsdom stub
+    Range.prototype.getBoundingClientRect = () => ({ x: 0, y: 0, width: 0, height: 0, top: 0, left: 0, right: 0, bottom: 0 });
+  }
+}
+if (globalThis.document && !document.elementFromPoint) {
+  document.elementFromPoint = () => null;
+}
