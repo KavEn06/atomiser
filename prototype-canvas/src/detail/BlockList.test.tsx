@@ -9,13 +9,13 @@ beforeEach(() => {
 });
 
 describe('BlockList', () => {
-  it('adds a text block and edits its markdown', () => {
+  it('adds a text block (Tiptap editor mounts)', () => {
     const id = useGraphStore.getState().addNode();
     render(<BlockList nodeId={id} />);
     fireEvent.click(screen.getByRole('button', { name: 'Add text' }));
-    const area = screen.getByPlaceholderText('Write text…') as HTMLTextAreaElement;
-    fireEvent.change(area, { target: { value: 'hello' } });
-    expect(useGraphStore.getState().nodes[id].body[0]).toMatchObject({ type: 'text', markdown: 'hello' });
+    expect(useGraphStore.getState().nodes[id].body[0]).toMatchObject({ type: 'text' });
+    // The rich-text toolbar renders alongside the mounted editor.
+    expect(screen.getByRole('button', { name: 'Bold' })).toBeInTheDocument();
   });
 
   it('adds and removes a chart block', () => {

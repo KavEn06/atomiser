@@ -1,5 +1,7 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
+import { temporal } from 'zundo';
+import { MarkerType } from '@xyflow/react';
 import type { Edge as RFEdgeBase, Node as RFNodeBase } from '@xyflow/react';
 import { seedGraph } from '../seed';
 import {
@@ -9,7 +11,9 @@ import {
   newImageBlock,
   newNode,
   newTextBlock,
+  WEIGHT_STROKE,
   type Block,
+  type EdgeWeight,
   type Graph,
   type GraphEdge,
   type GraphNode,
@@ -37,10 +41,12 @@ export interface GraphState {
   setStatus: (id: string, status: Status) => void;
   cycleStatus: (id: string) => void;
   moveNode: (id: string, x: number, y: number) => void;
+  setLayouts: (positions: Record<string, { x: number; y: number }>) => void;
 
   connect: (source: string, target: string) => string | null;
   deleteEdge: (id: string) => void;
   setEdgeLabel: (id: string, label: string) => void;
+  setEdgeWeight: (id: string, weight: EdgeWeight) => void;
 
   addBlock: (nodeId: string, kind: Block['type']) => string;
   updateBlock: (nodeId: string, blockId: string, patch: Partial<Block>) => void;
@@ -113,6 +119,16 @@ export const graphActions = (
       return { layouts: { ...s.layouts, [id]: { ...l, x, y } } };
     }),
 
+  setLayouts: (positions) =>
+    set((s) => {
+      const layouts = { ...s.layouts };
+      for (const [id, pos] of Object.entries(positions)) {
+        const l = layouts[id];
+        if (l) layouts[id] = { ...l, x: pos.x, y: pos.y };
+      }
+      return { layouts };
+    }),
+
   connect: (source, target) => {
     if (source === target) return null;
     const dupe = Object.values(get().edges).some((e) => e.source === source && e.target === target);
@@ -134,6 +150,13 @@ export const graphActions = (
       const e = s.edges[id];
       if (!e) return {};
       return { edges: { ...s.edges, [id]: { ...e, label } } };
+    }),
+
+  setEdgeWeight: (id, weight) =>
+    set((s) => {
+      const e = s.edges[id];
+      if (!e) return {};
+      return { edges: { ...s.edges, [id]: { ...e, weight } } };
     }),
 
   addBlock: (nodeId, kind) => {
@@ -192,11 +215,20 @@ export const graphActions = (
 });
 
 export const useGraphStore = create<GraphState>()(
-  persist(
-    (set, get) => ({ ...createInitialState(), ...graphActions(set, get) }),
+  temporal(
+    persist(
+      (set, get) => ({ ...createInitialState(), ...graphActions(set, get) }),
+      {
+        name: 'atomiser:graph:v1',
+        partialize: (s) => ({ graph: s.graph, nodes: s.nodes, edges: s.edges, layouts: s.layouts }),
+      },
+    ),
     {
-      name: 'atomiser:graph:v1',
+      // Track only the semantic + layout slices; actions/derived are excluded.
+      // No debounce — the canvas pauses history during drags, so each discrete
+      // edit is exactly one entry.
       partialize: (s) => ({ graph: s.graph, nodes: s.nodes, edges: s.edges, layouts: s.layouts }),
+      limit: 100,
     },
   ),
 );
@@ -215,7 +247,11 @@ export function selectFlowNodes(state: Pick<GraphState, 'nodes' | 'layouts'>): R
   });
 }
 
-export function selectFlowEdges(state: Pick<GraphState, 'edges'>, _connector: string): RFEdge[] {
+export function selectFlowEdges(
+  state: Pick<GraphState, 'edges'>,
+  _connector: string,
+  edgeColor = '#94a3b8',
+): RFEdge[] {
   return Object.values(state.edges).map((edge) => ({
     id: edge.id,
     source: edge.source,
@@ -223,5 +259,7 @@ export function selectFlowEdges(state: Pick<GraphState, 'edges'>, _connector: st
     type: 'labelled',
     label: edge.label,
     data: { edge },
+    style: { stroke: edgeColor, strokeWidth: WEIGHT_STROKE[edge.weight ?? 'normal'] },
+    markerEnd: { type: MarkerType.ArrowClosed, color: edgeColor, width: 16, height: 16 },
   }));
 }

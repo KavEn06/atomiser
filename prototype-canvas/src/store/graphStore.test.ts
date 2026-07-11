@@ -73,4 +73,22 @@ describe('graphStore nodes & edges', () => {
     expect(s().layouts[id].x).toBe(250);
     expect(s().layouts[id].y).toBe(175);
   });
+
+  it('newEdge defaults to normal weight; setEdgeWeight changes it', () => {
+    const a = s().addNode();
+    const b = s().addNode();
+    const e = s().connect(a, b)!;
+    expect(s().edges[e].weight).toBe('normal');
+    s().setEdgeWeight(e, 'heavy');
+    expect(s().edges[e].weight).toBe('heavy');
+  });
+
+  it('setLayouts moves multiple nodes in one operation', () => {
+    const a = s().addNode({ x: 0, y: 0 });
+    const b = s().addNode({ x: 0, y: 0 });
+    s().setLayouts({ [a]: { x: 100, y: 200 }, [b]: { x: 300, y: 400 }, ghost: { x: 9, y: 9 } });
+    expect(s().layouts[a]).toMatchObject({ x: 100, y: 200 });
+    expect(s().layouts[b]).toMatchObject({ x: 300, y: 400 });
+    expect(s().layouts.ghost).toBeUndefined();
+  });
 });
