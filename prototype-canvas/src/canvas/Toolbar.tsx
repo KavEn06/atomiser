@@ -5,6 +5,7 @@ import { useGraphStore } from '../store/graphStore';
 import { useSettings } from '../store/settingsStore';
 import { THEMES } from '../theme';
 import { TYPE_GLYPH } from '../nodes/labels';
+import { computeLayout } from './autoLayout';
 
 const TYPES: NodeType[] = ['task', 'decision', 'milestone', 'constraint'];
 
@@ -18,6 +19,12 @@ export function Toolbar() {
   const create = (nodeType: NodeType) => {
     const p = rf.screenToFlowPosition({ x: window.innerWidth / 2, y: window.innerHeight / 2 });
     addNode({ nodeType, x: p.x, y: p.y });
+  };
+
+  const autoArrange = () => {
+    const g = useGraphStore.getState();
+    g.setLayouts(computeLayout(Object.values(g.nodes), Object.values(g.edges)));
+    rf.fitView({ duration: 400, padding: 0.2 });
   };
 
   const btn = 'flex h-9 w-9 items-center justify-center rounded text-[15px] disabled:cursor-default';
@@ -60,6 +67,15 @@ export function Toolbar() {
         style={{ color: canRedo ? th.text : th.faint }}
       >
         ↷
+      </button>
+      <button
+        aria-label="Auto-arrange"
+        title="Auto-arrange"
+        onClick={autoArrange}
+        className={btn}
+        style={{ color: th.text }}
+      >
+        ▦
       </button>
       <button
         aria-label="Fit view"
