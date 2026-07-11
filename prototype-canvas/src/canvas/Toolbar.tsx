@@ -1,13 +1,56 @@
+import type { ReactNode } from 'react';
 import { useStore } from 'zustand';
 import { useReactFlow } from '@xyflow/react';
 import type { NodeType } from '../schema';
 import { useGraphStore } from '../store/graphStore';
 import { useSettings } from '../store/settingsStore';
-import { THEMES } from '../theme';
+import { THEMES, type Theme } from '../theme';
 import { TYPE_GLYPH } from '../nodes/labels';
 import { computeLayout } from './autoLayout';
 
 const TYPES: NodeType[] = ['task', 'decision', 'milestone', 'constraint'];
+
+// A toolbar button whose name appears in a tooltip after a brief hover, so the
+// icon-only buttons are discoverable.
+function ToolButton({
+  label,
+  hint,
+  onClick,
+  disabled,
+  color,
+  th,
+  children,
+}: {
+  label: string;
+  hint?: string;
+  onClick: () => void;
+  disabled?: boolean;
+  color: string;
+  th: Theme;
+  children: ReactNode;
+}) {
+  return (
+    <div className="group relative">
+      <button
+        aria-label={label}
+        onClick={onClick}
+        disabled={disabled}
+        className="flex h-9 w-9 items-center justify-center rounded text-[15px] disabled:cursor-default"
+        style={{ color }}
+      >
+        {children}
+      </button>
+      <span
+        role="tooltip"
+        className="pointer-events-none absolute top-1/2 left-full z-30 ml-2 flex -translate-y-1/2 items-center gap-1.5 whitespace-nowrap rounded px-2 py-1 text-[11px] opacity-0 shadow-md transition-opacity delay-300 duration-100 group-hover:opacity-100"
+        style={{ background: th.text, color: th.app }}
+      >
+        {label}
+        {hint && <span style={{ opacity: 0.55 }}>{hint}</span>}
+      </span>
+    </div>
+  );
+}
 
 export function Toolbar() {
   const rf = useReactFlow();
@@ -27,8 +70,6 @@ export function Toolbar() {
     rf.fitView({ duration: 400, padding: 0.2 });
   };
 
-  const btn = 'flex h-9 w-9 items-center justify-center rounded text-[15px] disabled:cursor-default';
-
   return (
     <div
       className="absolute top-3 left-3 z-20 flex flex-col gap-1 rounded-lg border p-1 shadow-md"
@@ -36,56 +77,48 @@ export function Toolbar() {
       onDoubleClick={(e) => e.stopPropagation()}
     >
       {TYPES.map((t) => (
-        <button
+        <ToolButton
           key={t}
-          aria-label={`Add ${t}`}
-          title={`Add ${t}`}
+          label={`Add ${t}`}
           onClick={() => create(t)}
-          className={btn}
-          style={{ color: th.text }}
+          color={th.text}
+          th={th}
         >
           {TYPE_GLYPH[t]}
-        </button>
+        </ToolButton>
       ))}
       <div className="my-0.5 h-px" style={{ background: th.border }} />
-      <button
-        aria-label="Undo"
-        title="Undo (⌘Z)"
+      <ToolButton
+        label="Undo"
+        hint="⌘Z"
         disabled={!canUndo}
         onClick={() => useGraphStore.temporal.getState().undo()}
-        className={btn}
-        style={{ color: canUndo ? th.text : th.faint }}
+        color={canUndo ? th.text : th.faint}
+        th={th}
       >
         ↶
-      </button>
-      <button
-        aria-label="Redo"
-        title="Redo (⇧⌘Z)"
+      </ToolButton>
+      <ToolButton
+        label="Redo"
+        hint="⇧⌘Z"
         disabled={!canRedo}
         onClick={() => useGraphStore.temporal.getState().redo()}
-        className={btn}
-        style={{ color: canRedo ? th.text : th.faint }}
+        color={canRedo ? th.text : th.faint}
+        th={th}
       >
         ↷
-      </button>
-      <button
-        aria-label="Auto-arrange"
-        title="Auto-arrange"
-        onClick={autoArrange}
-        className={btn}
-        style={{ color: th.text }}
-      >
+      </ToolButton>
+      <ToolButton label="Auto-arrange" onClick={autoArrange} color={th.text} th={th}>
         ▦
-      </button>
-      <button
-        aria-label="Fit view"
-        title="Fit view"
+      </ToolButton>
+      <ToolButton
+        label="Fit view"
         onClick={() => rf.fitView({ duration: 300, padding: 0.2 })}
-        className={btn}
-        style={{ color: th.text }}
+        color={th.text}
+        th={th}
       >
         ⤢
-      </button>
+      </ToolButton>
     </div>
   );
 }
