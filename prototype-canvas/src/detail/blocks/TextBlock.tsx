@@ -3,10 +3,13 @@ import StarterKit from '@tiptap/starter-kit';
 import { FontFamily, FontSize, TextStyle } from '@tiptap/extension-text-style';
 import type { TextBlock as TextBlockT } from '../../schema';
 import { useGraphStore } from '../../store/graphStore';
+import { useSettings } from '../../store/settingsStore';
+import { THEMES } from '../../theme';
 import { RichTextToolbar } from './RichTextToolbar';
 
 export function TextBlock({ nodeId, block }: { nodeId: string; block: TextBlockT }) {
   const updateBlock = useGraphStore((s) => s.updateBlock);
+  const th = THEMES[useSettings((s) => s.theme)];
   const editor = useEditor({
     immediatelyRender: false,
     extensions: [StarterKit, TextStyle, FontFamily, FontSize],
@@ -25,7 +28,8 @@ export function TextBlock({ nodeId, block }: { nodeId: string; block: TextBlockT
       <RichTextToolbar editor={editor} />
       <EditorContent
         editor={editor}
-        className="min-h-[72px] rounded border border-stone-300 p-2 text-[13px] leading-relaxed [&_.ProseMirror]:outline-none [&_ul]:list-disc [&_ul]:pl-5"
+        className="min-h-[72px] rounded border p-2 text-[13px] leading-relaxed [&_.ProseMirror]:outline-none [&_ul]:list-disc [&_ul]:pl-5"
+        style={{ borderColor: th.cardBorder, background: th.canvas, color: th.text }}
       />
     </div>
   );

@@ -1,4 +1,6 @@
 import type { Editor } from '@tiptap/react';
+import { useSettings } from '../../store/settingsStore';
+import { THEMES } from '../../theme';
 
 const SIZES: { label: string; value: string }[] = [
   { label: 'Small', value: '0.85rem' },
@@ -13,35 +15,45 @@ const FAMILIES: { label: string; value: string }[] = [
 ];
 
 export function RichTextToolbar({ editor }: { editor: Editor }) {
-  const btn = (active: boolean) =>
-    `rounded px-1.5 py-0.5 text-[12px] ${active ? 'bg-stone-200 font-semibold' : 'hover:bg-stone-100'}`;
+  const th = THEMES[useSettings((s) => s.theme)];
+  const selectStyle = { borderColor: th.cardBorder, background: th.card, color: th.text };
+  const markStyle = (active: boolean) => ({
+    background: active ? th.accent : 'transparent',
+    color: active ? th.onAccent : th.subtext,
+    fontWeight: active ? 600 : 400,
+  });
+  const cls = 'rounded px-1.5 py-0.5 text-[12px]';
 
   return (
-    <div className="mb-1 flex flex-wrap items-center gap-1 border-b border-stone-200 pb-1">
+    <div className="mb-1 flex flex-wrap items-center gap-1 border-b pb-1" style={{ borderColor: th.border }}>
       <button
         aria-label="Bold"
-        className={btn(editor.isActive('bold'))}
+        className={cls}
+        style={markStyle(editor.isActive('bold'))}
         onClick={() => editor.chain().focus().toggleBold().run()}
       >
         <b>B</b>
       </button>
       <button
         aria-label="Italic"
-        className={btn(editor.isActive('italic'))}
+        className={cls}
+        style={markStyle(editor.isActive('italic'))}
         onClick={() => editor.chain().focus().toggleItalic().run()}
       >
         <i>I</i>
       </button>
       <button
         aria-label="Underline"
-        className={btn(editor.isActive('underline'))}
+        className={cls}
+        style={markStyle(editor.isActive('underline'))}
         onClick={() => editor.chain().focus().toggleUnderline().run()}
       >
         <u>U</u>
       </button>
       <button
         aria-label="Bullet list"
-        className={btn(editor.isActive('bulletList'))}
+        className={cls}
+        style={markStyle(editor.isActive('bulletList'))}
         onClick={() => editor.chain().focus().toggleBulletList().run()}
       >
         • List
@@ -50,7 +62,8 @@ export function RichTextToolbar({ editor }: { editor: Editor }) {
         aria-label="Font size"
         defaultValue=""
         onChange={(e) => e.target.value && editor.chain().focus().setFontSize(e.target.value).run()}
-        className="rounded border border-stone-300 bg-transparent px-1 py-0.5 text-[12px]"
+        className="rounded border px-1 py-0.5 text-[12px]"
+        style={selectStyle}
       >
         <option value="" disabled>
           Size
@@ -65,7 +78,8 @@ export function RichTextToolbar({ editor }: { editor: Editor }) {
         aria-label="Font family"
         defaultValue=""
         onChange={(e) => e.target.value && editor.chain().focus().setFontFamily(e.target.value).run()}
-        className="rounded border border-stone-300 bg-transparent px-1 py-0.5 text-[12px]"
+        className="rounded border px-1 py-0.5 text-[12px]"
+        style={selectStyle}
       >
         <option value="" disabled>
           Font

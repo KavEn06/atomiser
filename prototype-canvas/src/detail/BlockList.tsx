@@ -1,5 +1,7 @@
 import type { Block } from '../schema';
 import { useGraphStore } from '../store/graphStore';
+import { useSettings } from '../store/settingsStore';
+import { THEMES } from '../theme';
 import { TextBlock } from './blocks/TextBlock';
 import { ImageBlock } from './blocks/ImageBlock';
 import { ChartBlock } from './blocks/ChartBlock';
@@ -15,12 +17,18 @@ export function BlockList({ nodeId }: { nodeId: string }) {
   const addBlock = useGraphStore((s) => s.addBlock);
   const deleteBlock = useGraphStore((s) => s.deleteBlock);
   const moveBlock = useGraphStore((s) => s.moveBlock);
+  const th = THEMES[useSettings((s) => s.theme)];
+
+  const insertStyle = { borderColor: th.cardBorder, color: th.text, background: th.card };
 
   return (
     <div className="space-y-3">
       {body.map((block) => (
-        <div key={block.id} className="rounded border border-stone-200 p-2">
-          <div className="mb-1 flex items-center gap-1 text-[10px] tracking-wider text-stone-400 uppercase">
+        <div key={block.id} className="rounded border p-2" style={{ borderColor: th.cardBorder, background: th.card }}>
+          <div
+            className="mb-1 flex items-center gap-1 text-[10px] tracking-wider uppercase"
+            style={{ color: th.faint }}
+          >
             <span>{block.type}</span>
             <button aria-label="Move up" onClick={() => moveBlock(nodeId, block.id, -1)} className="ml-auto px-1">
               ↑
@@ -35,27 +43,17 @@ export function BlockList({ nodeId }: { nodeId: string }) {
           <BlockView nodeId={nodeId} block={block} />
         </div>
       ))}
-      <div className="flex items-center gap-2 border-t border-stone-200 pt-2 text-[12px]">
-        <span className="text-[10px] tracking-wider text-stone-400 uppercase">Insert</span>
-        <button
-          aria-label="Add text"
-          onClick={() => addBlock(nodeId, 'text')}
-          className="rounded border border-stone-300 px-2 py-1"
-        >
+      <div className="flex items-center gap-2 border-t pt-2 text-[12px]" style={{ borderColor: th.border }}>
+        <span className="text-[10px] tracking-wider uppercase" style={{ color: th.faint }}>
+          Insert
+        </span>
+        <button aria-label="Add text" onClick={() => addBlock(nodeId, 'text')} className="rounded border px-2 py-1" style={insertStyle}>
           ¶ Text
         </button>
-        <button
-          aria-label="Add image"
-          onClick={() => addBlock(nodeId, 'image')}
-          className="rounded border border-stone-300 px-2 py-1"
-        >
+        <button aria-label="Add image" onClick={() => addBlock(nodeId, 'image')} className="rounded border px-2 py-1" style={insertStyle}>
           ⧉ Image
         </button>
-        <button
-          aria-label="Add chart"
-          onClick={() => addBlock(nodeId, 'chart')}
-          className="rounded border border-stone-300 px-2 py-1"
-        >
+        <button aria-label="Add chart" onClick={() => addBlock(nodeId, 'chart')} className="rounded border px-2 py-1" style={insertStyle}>
           ▦ Chart
         </button>
       </div>
