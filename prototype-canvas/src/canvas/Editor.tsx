@@ -1,4 +1,4 @@
-import { useCallback, useMemo } from 'react';
+import { useCallback, useMemo, useRef } from 'react';
 import {
   Background,
   Controls,
@@ -11,6 +11,8 @@ import {
 import { FlowNode } from '../nodes/FlowNode';
 import { LabelledEdge } from './LabelledEdge';
 import { Toolbar } from './Toolbar';
+import { UndoRedo } from './UndoRedo';
+import { MAX_ZOOM, MIN_ZOOM, useCadPanZoom } from './useCadPanZoom';
 import { selectFlowEdges, selectFlowNodes, useGraphStore, type RFNode } from '../store/graphStore';
 import { useSettings } from '../store/settingsStore';
 import { THEMES } from '../theme';
@@ -30,6 +32,10 @@ function Canvas() {
   const addNode = useGraphStore((s) => s.addNode);
   const th = THEMES[useSettings((s) => s.theme)];
   const rf = useReactFlow();
+  const wrapRef = useRef<HTMLDivElement>(null);
+
+  // Take over wheel/trackpad pan+zoom (see useCadPanZoom for the why).
+  useCadPanZoom(wrapRef);
 
   const nodes = useMemo(() => selectFlowNodes({ nodes: nodesRec, layouts }), [nodesRec, layouts]);
   const edges = useMemo(
@@ -68,8 +74,9 @@ function Canvas() {
   const onNodeDragStop = useCallback(() => useGraphStore.temporal.getState().resume(), []);
 
   return (
-    <div className="h-full w-full" style={{ background: th.canvas }} onDoubleClick={onDoubleClick}>
+    <div ref={wrapRef} className="h-full w-full" style={{ background: th.canvas }} onDoubleClick={onDoubleClick}>
       <Toolbar />
+      <UndoRedo />
       <ReactFlow
         nodes={nodes}
         edges={edges}
@@ -81,7 +88,17 @@ function Canvas() {
         onNodeDragStop={onNodeDragStop}
         fitView
         fitViewOptions={{ padding: 0.2 }}
-        minZoom={0.25}
+        minZoom={MIN_ZOOM}
+        maxZoom={MAX_ZOOM}
+        // Drag-to-pan from any mouse button (left/middle/right), CAD-style.
+        panOnDrag={[0, 1, 2]}
+        // Wheel/trackpad pan+zoom is handled by useCadPanZoom, so turn off
+        // React Flow's own scroll handling to avoid double-processing.
+        panOnScroll={false}
+        zoomOnScroll={false}
+        zoomOnPinch={false}
+        zoomOnDoubleClick={false}
+        preventScrolling={false}
       >
         <Background variant={th.gridVariant} gap={th.gridGap} size={1} color={th.grid} />
         <Controls position="bottom-right" />
