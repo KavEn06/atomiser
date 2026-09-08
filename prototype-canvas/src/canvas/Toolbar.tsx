@@ -66,7 +66,6 @@ export function Toolbar() {
   const autoArrange = () => {
     const g = useGraphStore.getState();
     g.setLayouts(computeLayout(Object.values(g.nodes), Object.values(g.edges)));
-    rf.fitView({ duration: 400, padding: 0.2 });
   };
 
   return (

@@ -25,6 +25,23 @@ import {
 const STATUS_CYCLE: Status[] = ['todo', 'in_progress', 'done', 'blocked'];
 const now = () => new Date().toISOString();
 
+// Walk up the parent chain. Used to keep the hierarchy a tree: a node may never
+// end up inside itself. The seen-set keeps a malformed chain from looping.
+function hasAncestor(
+  nodes: Record<string, GraphNode>,
+  id: string,
+  ancestorId: string,
+): boolean {
+  const seen = new Set<string>();
+  let cur = nodes[id]?.parentId;
+  while (cur && !seen.has(cur)) {
+    if (cur === ancestorId) return true;
+    seen.add(cur);
+    cur = nodes[cur]?.parentId;
+  }
+  return false;
+}
+
 export interface GraphState {
   graph: Graph;
   nodes: Record<string, GraphNode>;
@@ -42,6 +59,10 @@ export interface GraphState {
   cycleStatus: (id: string) => void;
   moveNode: (id: string, x: number, y: number) => void;
   setLayouts: (positions: Record<string, { x: number; y: number }>) => void;
+
+  setParent: (id: string, parentId: string | null) => void;
+  group: (ids: string[]) => string | null;
+  ungroup: (parentId: string) => void;
 
   connect: (source: string, target: string) => string | null;
   deleteEdge: (id: string) => void;
@@ -88,6 +109,12 @@ export const graphActions = (
     set((s) => {
       const nodes = { ...s.nodes };
       const layouts = { ...s.layouts };
+      // Children outlive their parent — promote them rather than leaving them
+      // pointing at a node that no longer exists.
+      const orphaned = s.nodes[id]?.parentId ?? null;
+      for (const n of Object.values(s.nodes)) {
+        if (n.parentId === id) nodes[n.id] = { ...n, parentId: orphaned, updatedAt: now() };
+      }
       delete nodes[id];
       delete layouts[id];
       const edges = Object.fromEntries(
@@ -127,6 +154,67 @@ export const graphActions = (
         if (l) layouts[id] = { ...l, x: pos.x, y: pos.y };
       }
       return { layouts };
+    }),
+
+  // --- Hierarchy (atomiser.md §7). Optional everywhere: a flat graph is a
+  //     perfectly good graph, this is only for when a node feels too big. ---
+
+  setParent: (id, parentId) =>
+    set((s) => {
+      const n = s.nodes[id];
+      if (!n || id === parentId) return {};
+      if (parentId && (!s.nodes[parentId] || hasAncestor(s.nodes, parentId, id))) return {};
+      return { nodes: { ...s.nodes, [id]: { ...n, parentId, updatedAt: now() } } };
+    }),
+
+  group: (ids) => {
+    const state = get();
+    const present = ids.filter((id) => state.nodes[id]);
+    // Anything already inside another member of the selection stays where it
+    // is — grouping a node and its own child shouldn't flatten them together.
+    const top = present.filter(
+      (id) => !present.some((other) => other !== id && hasAncestor(state.nodes, id, other)),
+    );
+    if (top.length < 2) return null;
+
+    const parent = newNode({ title: 'New group', nodeType: 'task' });
+    // The group is born where its members already are, and inherits their
+    // parent so grouping inside a group nests rather than escapes.
+    parent.parentId = state.nodes[top[0]].parentId;
+    const pts = top.map((id) => state.layouts[id]).filter(Boolean);
+    const at = (k: 'x' | 'y') =>
+      pts.length > 0 ? pts.reduce((sum, l) => sum + l[k], 0) / pts.length : 0;
+
+    set((s) => {
+      const nodes = { ...s.nodes, [parent.id]: parent };
+      for (const id of top) nodes[id] = { ...s.nodes[id], parentId: parent.id, updatedAt: now() };
+      return {
+        nodes,
+        layouts: {
+          ...s.layouts,
+          [parent.id]: { nodeId: parent.id, x: at('x'), y: at('y'), collapsed: false },
+        },
+      };
+    });
+    return parent.id;
+  },
+
+  ungroup: (parentId) =>
+    set((s) => {
+      const parent = s.nodes[parentId];
+      if (!parent) return {};
+      const nodes = { ...s.nodes };
+      for (const n of Object.values(s.nodes)) {
+        // Children rise to wherever the group itself lived.
+        if (n.parentId === parentId) nodes[n.id] = { ...n, parentId: parent.parentId, updatedAt: now() };
+      }
+      delete nodes[parentId];
+      const layouts = { ...s.layouts };
+      delete layouts[parentId];
+      const edges = Object.fromEntries(
+        Object.entries(s.edges).filter(([, e]) => e.source !== parentId && e.target !== parentId),
+      );
+      return { nodes, layouts, edges };
     }),
 
   connect: (source, target) => {
