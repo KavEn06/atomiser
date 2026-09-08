@@ -3,6 +3,7 @@ import { useReactFlow } from '@xyflow/react';
 import type { NodeType } from '../schema';
 import { useGraphStore } from '../store/graphStore';
 import { useSettings } from '../store/settingsStore';
+import { useUiStore } from '../store/uiStore';
 import { THEMES, type Theme } from '../theme';
 import { TYPE_GLYPH } from '../nodes/labels';
 import { computeLayout } from './autoLayout';
@@ -55,6 +56,7 @@ export function Toolbar() {
   const rf = useReactFlow();
   const addNode = useGraphStore((s) => s.addNode);
   const th = THEMES[useSettings((s) => s.theme)];
+  const toggleNext = useUiStore((s) => s.toggleNext);
 
   const create = (nodeType: NodeType) => {
     const p = rf.screenToFlowPosition({ x: window.innerWidth / 2, y: window.innerHeight / 2 });
@@ -95,6 +97,10 @@ export function Toolbar() {
         th={th}
       >
         ⤢
+      </ToolButton>
+      <div className="my-0.5 h-px" style={{ background: th.border }} />
+      <ToolButton label="What's next" onClick={toggleNext} color={th.text} th={th}>
+        ◎
       </ToolButton>
     </div>
   );

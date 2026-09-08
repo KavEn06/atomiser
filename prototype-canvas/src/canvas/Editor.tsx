@@ -12,6 +12,7 @@ import { FlowNode } from '../nodes/FlowNode';
 import { LabelledEdge } from './LabelledEdge';
 import { Toolbar } from './Toolbar';
 import { UndoRedo } from './UndoRedo';
+import { NextUpPanel } from '../graph/NextUpPanel';
 import { MAX_ZOOM, MIN_ZOOM, useCadPanZoom } from './useCadPanZoom';
 import { selectFlowEdges, selectFlowNodes, useGraphStore, type RFNode } from '../store/graphStore';
 import { useSettings } from '../store/settingsStore';
@@ -76,6 +77,7 @@ function Canvas() {
   return (
     <div ref={wrapRef} className="h-full w-full" style={{ background: th.canvas }} onDoubleClick={onDoubleClick}>
       <Toolbar />
+      <NextUpPanel />
       <UndoRedo />
       <ReactFlow
         nodes={nodes}
