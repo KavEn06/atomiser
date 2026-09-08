@@ -1,5 +1,4 @@
 import type { ReactNode } from 'react';
-import { useStore } from 'zustand';
 import { useReactFlow } from '@xyflow/react';
 import type { NodeType } from '../schema';
 import { useGraphStore } from '../store/graphStore';
@@ -12,7 +11,7 @@ const TYPES: NodeType[] = ['task', 'decision', 'milestone', 'constraint'];
 
 // A toolbar button whose name appears in a tooltip after a brief hover, so the
 // icon-only buttons are discoverable.
-function ToolButton({
+export function ToolButton({
   label,
   hint,
   onClick,
@@ -56,8 +55,6 @@ export function Toolbar() {
   const rf = useReactFlow();
   const addNode = useGraphStore((s) => s.addNode);
   const th = THEMES[useSettings((s) => s.theme)];
-  const canUndo = useStore(useGraphStore.temporal, (t) => t.pastStates.length > 0);
-  const canRedo = useStore(useGraphStore.temporal, (t) => t.futureStates.length > 0);
 
   const create = (nodeType: NodeType) => {
     const p = rf.screenToFlowPosition({ x: window.innerWidth / 2, y: window.innerHeight / 2 });
@@ -88,26 +85,6 @@ export function Toolbar() {
         </ToolButton>
       ))}
       <div className="my-0.5 h-px" style={{ background: th.border }} />
-      <ToolButton
-        label="Undo"
-        hint="⌘Z"
-        disabled={!canUndo}
-        onClick={() => useGraphStore.temporal.getState().undo()}
-        color={canUndo ? th.text : th.faint}
-        th={th}
-      >
-        ↶
-      </ToolButton>
-      <ToolButton
-        label="Redo"
-        hint="⇧⌘Z"
-        disabled={!canRedo}
-        onClick={() => useGraphStore.temporal.getState().redo()}
-        color={canRedo ? th.text : th.faint}
-        th={th}
-      >
-        ↷
-      </ToolButton>
       <ToolButton label="Auto-arrange" onClick={autoArrange} color={th.text} th={th}>
         ▦
       </ToolButton>
