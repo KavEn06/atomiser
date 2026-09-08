@@ -40,8 +40,8 @@ function Canvas() {
 
   const nodes = useMemo(() => selectFlowNodes({ nodes: nodesRec, layouts }), [nodesRec, layouts]);
   const edges = useMemo(
-    () => selectFlowEdges({ edges: edgesRec }, connector, th.edge),
-    [edgesRec, connector, th.edge],
+    () => selectFlowEdges({ edges: edgesRec, nodes: nodesRec, layouts }, connector, th.edge),
+    [edgesRec, nodesRec, layouts, connector, th.edge],
   );
 
   const onNodesChange = useCallback(

@@ -4,6 +4,8 @@ import { temporal } from 'zundo';
 import { MarkerType } from '@xyflow/react';
 import type { Edge as RFEdgeBase, Node as RFNodeBase } from '@xyflow/react';
 import { seedGraph } from '../seed';
+import { boundaryEdges, visibleNodes } from '../graph/collapse';
+import { buildChildIndex, rollupOf, type Rollup } from '../graph/rollup';
 import {
   newChartBlock,
   newEdge,
@@ -63,6 +65,7 @@ export interface GraphState {
   setParent: (id: string, parentId: string | null) => void;
   group: (ids: string[]) => string | null;
   ungroup: (parentId: string) => void;
+  toggleCollapse: (id: string) => void;
 
   connect: (source: string, target: string) => string | null;
   deleteEdge: (id: string) => void;
@@ -199,6 +202,13 @@ export const graphActions = (
     return parent.id;
   },
 
+  toggleCollapse: (id) =>
+    set((s) => {
+      const l = s.layouts[id];
+      if (!l) return {};
+      return { layouts: { ...s.layouts, [id]: { ...l, collapsed: !l.collapsed } } };
+    }),
+
   ungroup: (parentId) =>
     set((s) => {
       const parent = s.nodes[parentId];
@@ -323,24 +333,34 @@ export const useGraphStore = create<GraphState>()(
 
 // --- Pure selectors: store shape → React Flow arrays ---
 
-export type FlowNodeData = { node: GraphNode };
+export type FlowNodeData = { node: GraphNode; rollup: Rollup | null; collapsed: boolean };
 export type FlowEdgeData = { edge: GraphEdge };
 export type RFNode = RFNodeBase<FlowNodeData, 'flow'>;
 export type RFEdge = RFEdgeBase<FlowEdgeData>;
 
+// Only what the canvas should show: anything inside a collapsed group is
+// represented by the group itself. Parents carry their rollup so the node can
+// render "blocked · 1/3 done" instead of a hand-set status.
 export function selectFlowNodes(state: Pick<GraphState, 'nodes' | 'layouts'>): RFNode[] {
-  return Object.values(state.nodes).map((node) => {
+  const children = buildChildIndex(Object.values(state.nodes));
+  return visibleNodes(state.nodes, state.layouts).map((node) => {
     const l = state.layouts[node.id];
-    return { id: node.id, type: 'flow', position: { x: l?.x ?? 0, y: l?.y ?? 0 }, data: { node } };
+    return {
+      id: node.id,
+      type: 'flow',
+      position: { x: l?.x ?? 0, y: l?.y ?? 0 },
+      data: { node, rollup: rollupOf(node, children), collapsed: l?.collapsed ?? false },
+    };
   });
 }
 
 export function selectFlowEdges(
-  state: Pick<GraphState, 'edges'>,
+  state: Pick<GraphState, 'edges' | 'nodes' | 'layouts'>,
   _connector: string,
   edgeColor = '#94a3b8',
 ): RFEdge[] {
-  return Object.values(state.edges).map((edge) => ({
+  const edges = boundaryEdges(Object.values(state.edges), state.nodes, state.layouts);
+  return edges.map((edge) => ({
     id: edge.id,
     source: edge.source,
     target: edge.target,

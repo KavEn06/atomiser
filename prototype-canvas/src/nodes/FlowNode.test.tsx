@@ -38,4 +38,44 @@ describe('FlowNode', () => {
     fireEvent.click(screen.getByLabelText('Expand node'));
     expect(useUiStore.getState().selectedNodeId).toBe(id);
   });
+
+  // A group summarises the work inside it (§7): status is derived, not clickable.
+  function makeGroup() {
+    const g = useGraphStore.getState();
+    const a = g.addNode({ title: 'Toolchain' });
+    const b = g.addNode({ title: 'Board config' });
+    g.setStatus(a, 'done');
+    g.setStatus(b, 'blocked');
+    return { parent: g.group([a, b])!, a, b };
+  }
+
+  it('a group shows its rolled-up status and progress instead of a status button', () => {
+    makeGroup();
+    renderCanvas();
+    const summary = screen.getByTitle("Rolled up from this group's contents");
+    expect(summary).toHaveTextContent('Blocked');
+    expect(summary).toHaveTextContent('1/2 done');
+    // The two children keep their own clickable pills; the group does not.
+    expect(screen.getAllByTitle('Click to cycle status')).toHaveLength(2);
+  });
+
+  it('collapsing a group hides its children and expanding brings them back', () => {
+    const { parent } = makeGroup();
+    const { rerender } = renderCanvas();
+    expect(screen.getByText('Toolchain')).toBeInTheDocument();
+
+    fireEvent.click(screen.getByLabelText('Collapse group'));
+    expect(useGraphStore.getState().layouts[parent].collapsed).toBe(true);
+
+    const canvas = (
+      <ReactFlowProvider>
+        <div style={{ width: 800, height: 600 }}>
+          <ReactFlow nodes={selectFlowNodes(useGraphStore.getState())} edges={[]} nodeTypes={nodeTypes} />
+        </div>
+      </ReactFlowProvider>
+    );
+    rerender(canvas);
+    expect(screen.queryByText('Toolchain')).not.toBeInTheDocument();
+    expect(screen.getByText('New group')).toBeInTheDocument();
+  });
 });
