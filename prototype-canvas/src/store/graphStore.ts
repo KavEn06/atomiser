@@ -53,7 +53,7 @@ export interface GraphState {
   addNode: (p?: { title?: string; nodeType?: NodeType; x?: number; y?: number }) => string;
   updateNode: (
     id: string,
-    patch: Partial<Pick<GraphNode, 'title' | 'nodeType' | 'status' | 'meta' | 'body'>>,
+    patch: Partial<Pick<GraphNode, 'title' | 'description' | 'nodeType' | 'status' | 'meta' | 'body'>>,
   ) => void;
   deleteNode: (id: string) => void;
   renameNode: (id: string, title: string) => void;

@@ -48,4 +48,8 @@ describe('factories', () => {
   it('newGraph uses the fixed graph id', () => {
     expect(newGraph('X').id).toBe('g_main');
   });
+  it('newNode leaves description unset — persisted nodes predate the field', () => {
+    expect(newNode().description).toBeUndefined();
+    expect(newNode({ description: 'Short summary' }).description).toBe('Short summary');
+  });
 });

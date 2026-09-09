@@ -30,6 +30,13 @@ export interface GraphNode {
   graphId: string;
   parentId: string | null;
   title: string;
+  /**
+   * A short plain-text summary. atomiser.md §6 lists it as a nodes column
+   * alongside `meta`, not inside it — `meta` is for domain-specific fields and
+   * a summary is universal. Optional because nodes persisted before this field
+   * existed have no value for it: read as `node.description ?? ''`.
+   */
+  description?: string;
   nodeType: NodeType;
   status: Status;
   body: Block[];
