@@ -4,6 +4,7 @@ import { useUiStore } from '../store/uiStore';
 import { useSettings } from '../store/settingsStore';
 import { THEMES } from '../theme';
 import { BlockList } from './BlockList';
+import { NodeDetails } from './NodeDetails';
 import { STATUS_LABELS } from '../nodes/labels';
 
 const TYPES: NodeType[] = ['task', 'decision', 'milestone', 'constraint'];
@@ -78,7 +79,10 @@ export function NodeDrawer() {
       </div>
 
       <div className="min-h-0 flex-1 overflow-y-auto p-4">
-        <BlockList nodeId={id} />
+        <NodeDetails nodeId={id} />
+        <div className="mt-4 border-t pt-4" style={{ borderColor: th.border }}>
+          <BlockList nodeId={id} />
+        </div>
       </div>
     </aside>
   );
