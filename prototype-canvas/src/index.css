@@ -14,3 +14,17 @@ body,
   height: 100%;
   margin: 0;
 }
+
+/* React Flow gives every draggable node the same grab-hand cursor as the
+   pannable pane beneath it, so nodes and empty canvas are indistinguishable
+   at a glance. Reserve the hand for the pane (panning); nodes read as
+   clickable/selectable until you actually start dragging one. */
+.react-flow__node.draggable {
+  cursor: default;
+}
+.react-flow__node.selectable {
+  cursor: pointer;
+}
+.react-flow__node.draggable.dragging {
+  cursor: grabbing;
+}

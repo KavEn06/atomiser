@@ -7,11 +7,14 @@ import { THEMES } from '../theme';
 import { useSettings } from '../store/settingsStore';
 
 export function FlowNode({ id, data, selected }: NodeProps<RFNode>) {
-  const node = (data as FlowNodeData).node;
+  const { node, rollup, collapsed } = data as FlowNodeData;
   const cycleStatus = useGraphStore((s) => s.cycleStatus);
+  const toggleCollapse = useGraphStore((s) => s.toggleCollapse);
   const openNode = useUiStore((s) => s.openNode);
   const th = THEMES[useSettings((s) => s.theme)];
-  const c = th.status[node.status];
+  // A parent's status is derived from its children and is never hand-set (§7).
+  const status = rollup ? rollup.status : node.status;
+  const c = th.status[status];
   const isConstraint = node.nodeType === 'constraint';
   const isMilestone = node.nodeType === 'milestone';
 
@@ -29,7 +32,21 @@ export function FlowNode({ id, data, selected }: NodeProps<RFNode>) {
         style={{ color: th.faint }}
       >
         <span>{TYPE_GLYPH[node.nodeType]}</span>
-        <span>{node.nodeType}</span>
+        <span>{rollup ? 'group' : node.nodeType}</span>
+        {rollup && (
+          <button
+            aria-label={collapsed ? 'Expand group' : 'Collapse group'}
+            onClick={(e) => {
+              e.stopPropagation();
+              toggleCollapse(id);
+            }}
+            className="cursor-pointer rounded px-1 text-[11px] leading-none"
+            style={{ color: th.subtext }}
+            title={collapsed ? 'Expand group' : 'Collapse group'}
+          >
+            {collapsed ? '▸' : '▾'}
+          </button>
+        )}
         <button
           aria-label="Expand node"
           onClick={(e) => {
@@ -49,20 +66,34 @@ export function FlowNode({ id, data, selected }: NodeProps<RFNode>) {
       >
         {node.title}
       </div>
-      {!isConstraint && (
-        <button
-          onClick={(e) => {
-            e.stopPropagation();
-            cycleStatus(id);
-          }}
-          title="Click to cycle status"
-          className="mt-1.5 flex cursor-pointer items-center gap-1.5 text-[9.5px] tracking-[0.14em] uppercase"
-          style={{ color: isMilestone ? th.faint : c }}
-        >
-          <span className="h-1.5 w-1.5 rounded-full" style={{ background: isMilestone ? th.faint : c }} />
-          {STATUS_LABELS[node.status]}
-        </button>
-      )}
+      {!isConstraint &&
+        (rollup ? (
+          // Derived — a summary of the work inside, not a button.
+          <div
+            className="mt-1.5 flex items-center gap-1.5 text-[9.5px] tracking-[0.14em] uppercase"
+            style={{ color: isMilestone ? th.faint : c }}
+            title="Rolled up from this group's contents"
+          >
+            <span className="h-1.5 w-1.5 rounded-full" style={{ background: isMilestone ? th.faint : c }} />
+            {STATUS_LABELS[rollup.status]}
+            <span style={{ color: th.faint }}>
+              · {rollup.done}/{rollup.total} done
+            </span>
+          </div>
+        ) : (
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              cycleStatus(id);
+            }}
+            title="Click to cycle status"
+            className="mt-1.5 flex cursor-pointer items-center gap-1.5 text-[9.5px] tracking-[0.14em] uppercase"
+            style={{ color: isMilestone ? th.faint : c }}
+          >
+            <span className="h-1.5 w-1.5 rounded-full" style={{ background: isMilestone ? th.faint : c }} />
+            {STATUS_LABELS[node.status]}
+          </button>
+        ))}
       <Handle type="target" position={Position.Left} className="!h-1.5 !w-1.5 !border-0" style={{ background: th.faint }} />
       <Handle type="source" position={Position.Right} className="!h-1.5 !w-1.5 !border-0" style={{ background: th.faint }} />
     </div>

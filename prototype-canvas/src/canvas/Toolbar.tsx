@@ -1,8 +1,9 @@
 import type { ReactNode } from 'react';
-import { useReactFlow } from '@xyflow/react';
+import { useReactFlow, useStore as useFlowStore } from '@xyflow/react';
 import type { NodeType } from '../schema';
 import { useGraphStore } from '../store/graphStore';
 import { useSettings } from '../store/settingsStore';
+import { useUiStore } from '../store/uiStore';
 import { THEMES, type Theme } from '../theme';
 import { TYPE_GLYPH } from '../nodes/labels';
 import { computeLayout } from './autoLayout';
@@ -55,6 +56,17 @@ export function Toolbar() {
   const rf = useReactFlow();
   const addNode = useGraphStore((s) => s.addNode);
   const th = THEMES[useSettings((s) => s.theme)];
+  const toggleNext = useUiStore((s) => s.toggleNext);
+  const group = useGraphStore((s) => s.group);
+  // Joined into a string so the selector returns a primitive — the toolbar
+  // re-renders when the selection changes, not on every drag frame.
+  const selectedIds = useFlowStore((s) =>
+    Array.from(s.nodeLookup.values())
+      .filter((n) => n.selected)
+      .map((n) => n.id)
+      .join(','),
+  );
+  const selection = selectedIds ? selectedIds.split(',') : [];
 
   const create = (nodeType: NodeType) => {
     const p = rf.screenToFlowPosition({ x: window.innerWidth / 2, y: window.innerHeight / 2 });
@@ -64,7 +76,6 @@ export function Toolbar() {
   const autoArrange = () => {
     const g = useGraphStore.getState();
     g.setLayouts(computeLayout(Object.values(g.nodes), Object.values(g.edges)));
-    rf.fitView({ duration: 400, padding: 0.2 });
   };
 
   return (
@@ -95,6 +106,20 @@ export function Toolbar() {
         th={th}
       >
         ⤢
+      </ToolButton>
+      <div className="my-0.5 h-px" style={{ background: th.border }} />
+      <ToolButton
+        label="Group selection"
+        hint={selection.length >= 2 ? `${selection.length} nodes` : 'select 2+'}
+        disabled={selection.length < 2}
+        onClick={() => group(selection)}
+        color={selection.length >= 2 ? th.text : th.faint}
+        th={th}
+      >
+        ⧉
+      </ToolButton>
+      <ToolButton label="What's next" onClick={toggleNext} color={th.text} th={th}>
+        ◎
       </ToolButton>
     </div>
   );
