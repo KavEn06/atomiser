@@ -25,6 +25,39 @@ export type ChartBlock = {
 };
 export type Block = TextBlock | ImageBlock | ChartBlock;
 
+// --- Type-aware node detail (atomiser.md §2, "expandable nodes"). Stored under
+//     `meta.details[nodeType]` — JSONB per §6, one bucket per node type so that
+//     changing a node's type hides the old fields instead of destroying them. ---
+
+export const EFFORTS = ['S', 'M', 'L'] as const;
+export type Effort = (typeof EFFORTS)[number];
+
+export const HARDNESS = ['hard', 'soft'] as const;
+export type Hardness = (typeof HARDNESS)[number];
+
+export type DecisionOption = { id: string; label: string; note: string };
+export type Criterion = { id: string; text: string; met: boolean };
+
+export type TaskDetails = { nodeType: 'task'; doneWhen: string; effort: Effort | null };
+export type DecisionDetails = {
+  nodeType: 'decision';
+  options: DecisionOption[];
+  chosenId: string | null;
+  rationale: string;
+};
+export type MilestoneDetails = { nodeType: 'milestone'; criteria: Criterion[]; targetDate: string };
+export type ConstraintDetails = { nodeType: 'constraint'; hardness: Hardness };
+
+export type DetailsByType = {
+  task: TaskDetails;
+  decision: DecisionDetails;
+  milestone: MilestoneDetails;
+  constraint: ConstraintDetails;
+};
+// Indexing the map by NodeType keeps it exhaustive: add a node type (§14 leaves
+// the taxonomy open) and this line stops compiling until the map grows an entry.
+export type NodeDetails = DetailsByType[NodeType];
+
 export interface GraphNode {
   id: string;
   graphId: string;
