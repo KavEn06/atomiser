@@ -27,6 +27,24 @@ export function seedGraph(): Seeded {
   const int = mk('Integration test', 'milestone', 'todo', 1140, 260);
   const deploy = mk('Deploy to greenhouse', 'task', 'todo', 1420, 260);
 
+  // Two worked examples so an expandable node reads as something real on a
+  // first load, rather than an empty form (atomiser.md §2).
+  mcu.n.description = 'Both fit the budget; the difference is Wi-Fi and toolchain maturity.';
+  mcu.n.meta = {
+    details: {
+      decision: {
+        options: [
+          { id: 'o_esp32', label: 'ESP32', note: 'Wi-Fi on board, bigger power draw' },
+          { id: 'o_rp2040', label: 'RP2040', note: 'Cheaper, needs a separate radio' },
+        ],
+        chosenId: 'o_esp32',
+        rationale: 'The dashboard needs Wi-Fi; a separate radio costs more than the MCU delta.',
+      },
+    },
+  };
+  fw.n.description = 'First light on the board — enough to prove the toolchain end to end.';
+  fw.n.meta = { details: { task: { doneWhen: 'LED blinks on command over UART', effort: 'M' } } };
+
   const all = [budget, req, mcu, parts, sensors, fw, enc, pump, dash, int, deploy];
   const id = (x: (typeof all)[number]) => x.n.id;
 
