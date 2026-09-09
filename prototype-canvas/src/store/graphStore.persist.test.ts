@@ -1,3 +1,4 @@
+import { readDetails } from '../detail/details/parse';
 import { beforeEach, describe, expect, it } from 'vitest';
 import { createInitialState, selectFlowEdges, selectFlowNodes, useGraphStore } from './graphStore';
 
@@ -8,6 +9,25 @@ beforeEach(() => {
 const s = () => useGraphStore.getState();
 
 describe('persistence + seed + selectors', () => {
+
+  it('the seeded decision node carries worked-through detail', () => {
+    s().loadSeed();
+    const mcu = Object.values(s().nodes).find((n) => n.title.includes('Choose MCU'))!;
+    const d = readDetails({ ...mcu, nodeType: 'decision' as const });
+    expect(d.options).toHaveLength(2);
+    expect(d.options.map((o) => o.label)).toEqual(['ESP32', 'RP2040']);
+    // A chosen id that survives readDetails proves it points at a real option.
+    expect(d.chosenId).toBe('o_esp32');
+    expect(mcu.description).toContain('budget');
+  });
+
+  it('the seeded firmware task carries a done-condition', () => {
+    s().loadSeed();
+    const fw = Object.values(s().nodes).find((n) => n.title.includes('Firmware'))!;
+    const d = readDetails({ ...fw, nodeType: 'task' as const });
+    expect(d.doneWhen).toBe('LED blinks on command over UART');
+    expect(d.effort).toBe('M');
+  });
   it('loadSeed fills the graph; clearGraph empties nodes/edges/layouts', () => {
     s().loadSeed();
     expect(Object.keys(s().nodes).length).toBe(11);

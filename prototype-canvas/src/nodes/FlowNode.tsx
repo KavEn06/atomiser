@@ -1,5 +1,6 @@
 import { Handle, Position, type NodeProps } from '@xyflow/react';
 import { STATUS_LABELS, TYPE_GLYPH } from './labels';
+import { hasContent } from '../detail/details/parse';
 import type { FlowNodeData, RFNode } from '../store/graphStore';
 import { useGraphStore } from '../store/graphStore';
 import { useUiStore } from '../store/uiStore';
@@ -47,18 +48,27 @@ export function FlowNode({ id, data, selected }: NodeProps<RFNode>) {
             {collapsed ? '▸' : '▾'}
           </button>
         )}
-        <button
-          aria-label="Expand node"
-          onClick={(e) => {
-            e.stopPropagation();
-            openNode(id);
-          }}
-          className="ml-auto cursor-pointer rounded px-1 text-[11px] leading-none"
-          style={{ color: th.subtext }}
-          title="Open node"
-        >
-          ⤢
-        </button>
+        <span className="ml-auto flex items-center gap-1">
+          {hasContent(node) && (
+            <span
+              title="Has details"
+              className="h-1.5 w-1.5 rounded-full"
+              style={{ background: isMilestone ? th.app : th.subtext }}
+            />
+          )}
+          <button
+            aria-label="Expand node"
+            onClick={(e) => {
+              e.stopPropagation();
+              openNode(id);
+            }}
+            className="cursor-pointer rounded px-1 text-[11px] leading-none"
+            style={{ color: th.subtext }}
+            title="Open node"
+          >
+            ⤢
+          </button>
+        </span>
       </div>
       <div
         className="mt-1 text-[13px] leading-snug font-medium"

@@ -78,4 +78,29 @@ describe('FlowNode', () => {
     expect(screen.queryByText('Toolchain')).not.toBeInTheDocument();
     expect(screen.getByText('New group')).toBeInTheDocument();
   });
+
+  // body has never been read outside the drawer, so a node full of notes looked
+  // identical to an empty one on the canvas.
+  it('marks a node that has something inside it', () => {
+    const id = useGraphStore.getState().addNode({ title: 'Enclosure design' });
+    const { rerender } = renderCanvas();
+    expect(screen.queryByTitle('Has details')).not.toBeInTheDocument();
+
+    useGraphStore.getState().updateNode(id, { description: 'FDM, 3 walls' });
+    rerender(
+      <ReactFlowProvider>
+        <div style={{ width: 800, height: 600 }}>
+          <ReactFlow nodes={selectFlowNodes(useGraphStore.getState())} edges={[]} nodeTypes={nodeTypes} />
+        </div>
+      </ReactFlowProvider>,
+    );
+    expect(screen.getByTitle('Has details')).toBeInTheDocument();
+  });
+
+  it('marks a node that holds a block', () => {
+    const id = useGraphStore.getState().addNode({ title: 'Firmware' });
+    useGraphStore.getState().addBlock(id, 'text');
+    renderCanvas();
+    expect(screen.getByTitle('Has details')).toBeInTheDocument();
+  });
 });

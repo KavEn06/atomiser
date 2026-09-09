@@ -27,7 +27,8 @@ No longer throwaway — it is the v0 **user-focused flowgraph editor**:
   (IndexedDB image blobs), `settingsStore`, `uiStore`.
 - `src/canvas/` — React Flow editor + editable labelled edges.
 - `src/nodes/` — the custom typed node.
-- `src/detail/` — the node drawer + text / image / chart block editors.
+- `src/detail/` — the node drawer, the type-aware detail section (`src/detail/details/`, stored
+  under `meta.details[nodeType]`), and the text / image / chart block editors.
 
 **Run:** `bun install && bun run dev`, then open http://localhost:5173. **Test:** `bun run test`.
 

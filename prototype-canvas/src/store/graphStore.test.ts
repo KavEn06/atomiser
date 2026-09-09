@@ -9,6 +9,12 @@ beforeEach(() => {
 const s = () => useGraphStore.getState();
 
 describe('graphStore nodes & edges', () => {
+
+  it('updateNode writes description', () => {
+    const id = s().addNode();
+    s().updateNode(id, { description: 'Both fit the budget' });
+    expect(s().nodes[id].description).toBe('Both fit the budget');
+  });
   it('addNode inserts a node and a matching layout, returns its id', () => {
     const id = s().addNode({ title: 'Sensor selection', x: 100, y: 40 });
     expect(s().nodes[id].title).toBe('Sensor selection');
